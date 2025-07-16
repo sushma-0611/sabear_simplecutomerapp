@@ -4,9 +4,9 @@ pipeline {
         // SonarQube
         SONAR_QUBE_CREDENTIALS_ID = 'sonar-token'
         SONAR_QUBE_NAME = 'sonarqube_server'
-
-        NEXUS_REPOSITORY_ID = 'maven_repo'
-        NEXUS_URL = 'http://98.82.189.119:8081/repository/maven_repo/'
+        // nexus
+        NEXUS_REPOSITORY_ID = 'Nexus_customer_app'
+        NEXUS_URL = 'http://98.82.189.119:8081/repository/Nexus_customer_app/'
     }
 
     tools {
