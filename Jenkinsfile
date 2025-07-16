@@ -1,98 +1,119 @@
 pipeline {
     agent any
+    environment {
+        // SonarQube
+        SONAR_QUBE_CREDENTIALS_ID = 'TToken1'
+        SONAR_QUBE_NAME = 'sonarqube-server'
+
+        // Nexus
+        NEXUS_REPOSITORY_ID = 'Nexus_customer_app'
+        NEXUS_URL = 'http://3.89.115.90:8081/repository/Nexus_customer_app/'
+
+        // Tomcat
+        TOMCAT_URL = 'http://34.202.205.194:8080/manager/text'
+        TOMCAT_CREDENTIALS_ID = 'tomcat-credentials'
+        TOMCAT_APP_CONTEXT = 'SimpleCustomerApp'
+    }
+
     tools {
-        // Note: this should match with the tool name configured in your jenkins instance (JENKINS_URL/configureTools/)
-        maven "MVN_HOME"
-        
+        maven 'MVN_HOME'
+        jdk 'jdk21'
     }
-	 environment {
-        // This can be nexus3 or nexus2
-        NEXUS_VERSION = "nexus3"
-        // This can be http or https
-        NEXUS_PROTOCOL = "http"
-        // Where your Nexus is running
-        NEXUS_URL = "18.221.189.193:8081/"
-        // Repository where we will upload the artifact
-        NEXUS_REPOSITORY = "sonarqube"
-        // Jenkins credential id to authenticate to Nexus OSS
-        NEXUS_CREDENTIAL_ID = "nexus_keygen"
-	SCANNER_HOME = tool 'sonar_scanner'
-    }
+
     stages {
-        stage("clone code") {
+        stage('Git Clone') {
             steps {
-                script {
-                    // Let's clone the source
-                    git 'https://github.com/betawins/sabear_simplecutomerapp.git';
+                git branch: 'feature-1.1', url: 'https://github.com/sushma-0611/sabear_simplecutomerapp.git'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv(credentialsId: "${SONAR_QUBE_CREDENTIALS_ID}", installationName: "${SONAR_QUBE_NAME}") {
+                    sh 'mvn clean verify sonar:sonar -DskipTests'
                 }
             }
         }
-        stage("mvn build") {
+
+        stage('Maven Package') {
             steps {
-                script {
-                    // If you are using Windows then you should use "bat" step
-                    // Since unit testing is out of the scope we skip them
-                    sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'Nexus-credentials',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    writeFile file: 'settings-temp.xml', text: """
+                        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+                          <servers>
+                            <server>
+                              <id>${env.NEXUS_REPOSITORY_ID}</id>
+                              <username>${env.NEXUS_USER}</username>
+                              <password>${env.NEXUS_PASS}</password>
+                            </server>
+                          </servers>
+                        </settings>
+                    """
+                    sh 'mvn deploy -DskipTests --settings settings-temp.xml'
                 }
             }
         }
-	stage('SonarCloud') {
-            steps {
-                withSonarQubeEnv('sonarqube_server') {
-				sh '$SCANNER_HOME/bin/sonar-scanner \
-				-Dsonar.projectKey=Ncodeit \
-				-Dsonar.projectName=Ncodeit \
-				-Dsonar.projectVersion=2.0 \
-				-Dsonar.sources=/var/lib/jenkins/workspace/$JOB_NAME/src/ \
-				-Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
-				-Dsonar.junit.reportsPath=target/surefire-reports \
-				-Dsonar.jacoco.reportPath=target/jacoco.exec \
-				-Dsonar.java.binaries=src/com/room/sample '
-				
-		     }
-		}
-	    }
-        stage("publish to nexus") {
+
+        stage('Deploy to Tomcat') {
             steps {
                 script {
-                    // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
-                    pom = readMavenPom file: "pom.xml";
-                    // Find built artifact under target folder
-                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
-                    // Print some info from the artifact found
-                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-                    // Extract the path from the File found
-                    artifactPath = filesByGlob[0].path;
-                    // Assign to a boolean response verifying If the artifact name exists
-                    artifactExists = fileExists artifactPath;
-                    if(artifactExists) {
-                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
-                        nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-			    groupId: pom.groupId,
-                            version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
-                            artifacts: [
-                                // Artifact generated such as .jar, .ear and .war files.
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: artifactPath,
-                                type: pom.packaging],
-                                // Lets upload the pom.xml file for additional information for Transitive dependencies
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: "pom.xml",
-                                type: "pom"]
-                            ]
-                        );
+                    def originalWar = 'target/SimpleCustomerApp-1.0.0-SNAPSHOT.war'
+                    def renamedWar = "target/${env.TOMCAT_APP_CONTEXT}.war"
+
+                    if (fileExists(originalWar)) {
+                        sh "cp ${originalWar} ${renamedWar}"
+
+                        step([
+                            $class: 'DeployPublisher',
+                            adapters: [[
+                                $class: 'Tomcat9xAdapter',
+                                credentialsId: "${TOMCAT_CREDENTIALS_ID}",
+                                url: "${TOMCAT_URL}"
+                            ]],
+                            war: renamedWar,
+                            contextPath: "${env.TOMCAT_APP_CONTEXT}"
+                        ])
                     } else {
-                        error "*** File: ${artifactPath}, could not be found";
+                        error "WAR file not found at ${originalWar}"
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+
+        success {
+            echo ':white_check_mark: Pipeline succeeded.'
+            slackSend(
+                channel: '#jenkins-integration',
+                color: 'good',
+                message: "*✅ SUCCESS*: Build ${env.BUILD_NUMBER} for *${env.JOB_NAME}* succeeded!",
+                tokenCredentialId: 'Slack-Token'
+            )
+        }
+
+        failure {
+            echo ':x: Build or Deployment Failed!'
+            slackSend(
+                channel: '#jenkins-integration',
+                color: 'danger',
+                message: "*❌ FAILURE*: Build ${env.BUILD_NUMBER} for *${env.JOB_NAME}* failed!",
+                tokenCredentialId: 'Slack-Token'
+            )
         }
     }
 }
