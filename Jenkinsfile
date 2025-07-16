@@ -3,16 +3,7 @@ pipeline {
     environment {
         // SonarQube
         SONAR_QUBE_CREDENTIALS_ID = 'sonar-token'
-        SONAR_QUBE_NAME = 'sonarqube'
-
-        // Nexus
-        NEXUS_REPOSITORY_ID = 'Nexus_customer_app'
-        NEXUS_URL = 'http://3.89.115.90:8081/repository/Nexus_customer_app/'
-
-        // Tomcat
-        TOMCAT_URL = 'http://34.202.205.194:8080/manager/text'
-        TOMCAT_CREDENTIALS_ID = 'tomcat-credentials'
-        TOMCAT_APP_CONTEXT = 'SimpleCustomerApp'
+        SONAR_QUBE_NAME = 'sonarqube_server'
     }
 
     tools {
