@@ -37,7 +37,7 @@ pipeline {
         stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'nexus',
+                    credentialsId: 'Nexus-credentials',
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
