@@ -4,6 +4,9 @@ pipeline {
         // SonarQube
         SONAR_QUBE_CREDENTIALS_ID = 'sonar-token'
         SONAR_QUBE_NAME = 'sonarqube_server'
+
+        NEXUS_REPOSITORY_ID = 'maven_repo'
+        NEXUS_URL = 'http://98.82.189.119:8081/repository/maven_repo/'
     }
 
     tools {
@@ -34,7 +37,7 @@ pipeline {
         stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'Nexus-credentials',
+                    credentialsId: 'nexus',
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
