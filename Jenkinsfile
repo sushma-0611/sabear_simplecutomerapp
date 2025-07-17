@@ -28,7 +28,13 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONAR_QUBE_NAME}") {
-                    sh 'mvn clean verify sonar:sonar -DskipTests'
+                    sh """
+                        mvn clean verify sonar:sonar \
+                        -DskipTests \
+                        -Dsonar.projectKey=SimpleCustomerApp \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.token=$SONAR_AUTH_TOKEN
+                    """
                 }
             }
         }
