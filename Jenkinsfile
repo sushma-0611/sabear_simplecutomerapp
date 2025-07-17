@@ -5,7 +5,9 @@ pipeline {
         SONARQUBE_URL = 'http://http://3.81.41.198:9000/l'
         NEXUS_REPO = 'Nexus_customer_app'
     }
-
+    tools{
+        maven 'MVN_HOME'
+    }
     stages {
 
         stage('Git Clone') {
