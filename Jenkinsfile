@@ -7,7 +7,7 @@ pipeline {
 
         // Nexus
         NEXUS_REPOSITORY_ID = 'Nexus_customer_app'
-        NEXUS_URL = 'http://3.89.115.90:8081/repository/Nexus_customer_app/'
+        NEXUS_URL = 'http://98.82.189.119:8081//repository/Nexus_customer_app/'
 
         // Tomcat
         TOMCAT_URL = 'http://34.202.205.194:8080/manager/text'
@@ -17,7 +17,6 @@ pipeline {
 
     tools {
         maven 'MVN_HOME'
-        jdk 'jdk21'
     }
 
     stages {
