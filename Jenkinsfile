@@ -14,7 +14,7 @@ pipeline {
 
         stage('Git Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/sushma-0611/sabear_simplecutomerapp.git'
+                git branch: 'feature-1.1', url: 'https://github.com/sushma-0611/sabear_simplecutomerapp.git'
             }
         }
 
