@@ -3,7 +3,7 @@ pipeline {
     environment {
         // SonarQube
         SONAR_QUBE_CREDENTIALS_ID = 'sonar-token'
-        SONAR_QUBE_NAME = 'sonarqube-server'
+        SONAR_QUBE_NAME = 'sonarqube_server'
 
         // Nexus
         NEXUS_REPOSITORY_ID = 'Nexus_customer_app'
