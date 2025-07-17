@@ -17,6 +17,7 @@ pipeline {
 
     tools {
         maven 'MVN_HOME'
+         jdk 'jdk21'
     }
 
     stages {
