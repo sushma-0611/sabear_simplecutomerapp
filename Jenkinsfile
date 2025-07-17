@@ -10,7 +10,7 @@ pipeline {
         NEXUS_URL = 'http://98.82.189.119:8081//repository/Nexus_customer_app/'
 
         // Tomcat
-        TOMCAT_URL = 'http://34.202.205.194:8080/manager/text'
+        TOMCAT_URL = 'http://3.88.31.154:8080/manager/'
         TOMCAT_CREDENTIALS_ID = 'tomcat-credentials'
         TOMCAT_APP_CONTEXT = 'SimpleCustomerApp'
     }
