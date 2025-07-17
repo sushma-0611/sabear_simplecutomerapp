@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_URL = 'http://http://3.81.41.198:9000/'
+        SONAR_QUBE_CREDENTIALS_ID = 'sonar-token'
         SONAR_QUBE_NAME = 'sonarqube-server'
         NEXUS_REPO = 'Nexus_customer_app'
         
